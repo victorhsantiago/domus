@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model schema_migrations {
+  version     BigInt    @id
+  inserted_at DateTime? @db.Timestamp(0)
+}
+
+model User {
+  id            String          @id @default(uuid())
+  name          String
+  email         String          @unique
+  password      String
+  created_at    DateTime        @default(now())
+  updated_at    DateTime?        @updatedAt
+  DashboardUser DashboardUser[]
+}
+
+model Account {
+  id           String        @id @default(uuid())
+  name         String
+  type         AccountType   @relation(fields: [type_id], references: [id])
+  type_id      String
+  Dashboard    Dashboard?    @relation(fields: [dashboard_id], references: [id])
+  dashboard_id String?
+  Transaction  Transaction[]
+}
+
+model AccountType {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  Account     Account[]
+}
+
+model Dashboard {
+  id        String          @id @default(uuid())
+  name      String
+  users     DashboardUser[]
+  accounts  Account[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model DashboardUser {
+  user_id      String
+  dashboard_id String
+  role         String    @default("owner")
+  user         User      @relation(fields: [user_id], references: [id])
+  dashboard    Dashboard @relation(fields: [dashboard_id], references: [id])
+  createdAt    DateTime  @default(now())
+
+  @@id([user_id, dashboard_id])
+}
+
+model Transaction {
+  id         String          @id @default(uuid())
+  account_id String
+  amount     Decimal
+  type       TransactionType @relation(fields: [type_id], references: [id])
+  type_id    String
+  date       DateTime
+  account    Account         @relation(fields: [account_id], references: [id])
+  createdAt  DateTime        @default(now())
+}
+
+model TransactionType {
+  id          String        @id @default(uuid())
+  name        String
+  description String
+  Transaction Transaction[]
+}
